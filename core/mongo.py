@@ -13,7 +13,7 @@ from motor.motor_asyncio import (
     AsyncIOMotorCollection,
     AsyncIOMotorClientSession
 )
-from pymongo import ReturnDocument
+from pymongo import ReturnDocument, DESCENDING
 from pymongo.errors import ConfigurationError, ServerSelectionTimeoutError
 
 if TYPE_CHECKING:
@@ -121,3 +121,11 @@ class MongoDBClient:
         )
         data.pop('_id', None)
         self.bot.metadata = MetaData(bot=self.bot, **data)
+
+    async def generate_modlog_id(self) -> int:
+        collection: AsyncIOMotorCollection = self.database.modlogs
+        most_recent_modlog: Dict | None = await collection.find_one(
+            sort=[('case_id', DESCENDING)],
+            session=self.__session
+        )
+        return most_recent_modlog.get('case_id') + 1 if most_recent_modlog is not None else 1
