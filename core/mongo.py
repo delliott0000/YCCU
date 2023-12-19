@@ -111,7 +111,7 @@ class MongoDBClient:
         data.pop('_id', None)
         return MetaData(bot=self.bot, **data)
 
-    async def update_metadata(self, **kwargs) -> None:
+    async def update_metadata(self, **kwargs: Any) -> None:
         collection: AsyncIOMotorCollection = self.database.metadata
         data: Dict = await collection.find_one_and_update(
             {},
