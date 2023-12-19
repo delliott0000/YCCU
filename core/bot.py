@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from logging import getLogger
 from asyncio import run
 from os import listdir
@@ -10,6 +10,7 @@ from resources.config import *
 from core.mongo import MongoDBClient
 from core.mee6 import MEE6APIClient
 from core.help import CustomHelpCommand
+from core.errors import DurationError
 
 from discord.ext import commands, tasks
 from discord import (
@@ -38,6 +39,8 @@ _logger = getLogger(__name__)
 
 
 class CustomBot(commands.Bot):
+
+    __durations__ = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400, 'w': 604800, 'y': 31536000}
 
     def __init__(self) -> None:
         intents = Intents.all()
@@ -84,6 +87,17 @@ class CustomBot(commands.Bot):
     @property
     def now(self) -> datetime:
         return datetime.now(tz=timezone.utc)
+
+    def convert_duration(self, duration: str, allow_any: bool = False) -> timedelta:
+        try:
+            n = int(duration[:-1])
+            multiplier = self.__durations__[duration[-1:].lower()]
+            td = timedelta(seconds=n * multiplier)
+        except (KeyError, ValueError):
+            raise DurationError()
+        if td.total_seconds() < 60 and allow_any is False:
+            raise DurationError()
+        return td
 
     @tasks.loop(minutes=1)
     async def manage_modlogs(self) -> None:
