@@ -7,7 +7,6 @@ from asyncio import run
 from os import listdir
 
 from resources.config import *
-from core.metadata import MetaData
 from core.mongo import MongoDBClient
 from core.mee6 import MEE6APIClient
 from core.help import CustomHelpCommand
@@ -17,11 +16,15 @@ from discord import (
     Intents,
     LoginFailure,
     PrivilegedIntentsRequired,
-    HTTPException
+    HTTPException,
+    Activity,
+    ActivityType
 )
 
 if TYPE_CHECKING:
     from types import TracebackType
+
+    from core.metadata import MetaData
 
     from discord import (
         Guild,
@@ -88,7 +91,8 @@ class CustomBot(commands.Bot):
 
     @tasks.loop(count=1)
     async def init_status(self) -> None:
-        ...
+        await self.wait_until_ready()
+        await self.change_presence(activity=Activity(type=ActivityType.listening, name=self.metadata.activity))
 
     async def on_message(self, message: Message, /) -> None:
         if message.guild is None or message.guild != self.guild or message.author.bot is True:
