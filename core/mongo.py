@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from typing import Any
 from logging import getLogger
 
 from core.metadata import MetaData
@@ -16,13 +17,16 @@ from pymongo import ReturnDocument
 from pymongo.errors import ConfigurationError, ServerSelectionTimeoutError
 
 if TYPE_CHECKING:
-    from typing import Self, Any
+    from typing import Self
     from types import TracebackType
 
     from core.bot import CustomBot
 
 
 _logger = getLogger(__name__)
+
+
+Dict = dict[str, Any]
 
 
 class MongoDBClient:
@@ -73,7 +77,7 @@ class MongoDBClient:
 
     async def get_metadata(self) -> MetaData:
         collection: AsyncIOMotorCollection = self.database.metadata
-        data: dict[str, Any] | None = await collection.find_one({}, session=self.__session)
+        data: Dict | None = await collection.find_one({}, session=self.__session)
 
         if data is None:
             data = {
@@ -109,7 +113,7 @@ class MongoDBClient:
 
     async def update_metadata(self, **kwargs) -> None:
         collection: AsyncIOMotorCollection = self.database.metadata
-        data: dict[str, Any] = await collection.find_one_and_update(
+        data: Dict = await collection.find_one_and_update(
             {},
             {'$set': kwargs},
             return_document=ReturnDocument.AFTER,
