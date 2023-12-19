@@ -14,13 +14,16 @@ from core.errors import DurationError
 from core.modlog import Modlog
 
 from discord.ext import commands, tasks
+from discord.utils import MISSING
 from discord import (
     Intents,
     LoginFailure,
     PrivilegedIntentsRequired,
     HTTPException,
     Activity,
-    ActivityType
+    ActivityType,
+    Embed,
+    Colour
 )
 
 if TYPE_CHECKING:
@@ -28,6 +31,9 @@ if TYPE_CHECKING:
 
     from core.metadata import MetaData
 
+    from discord.ui import View
+    from discord.abc import Messageable
+    from discord.utils import _MissingSentinel
     from discord import (
         Guild,
         User,
@@ -37,6 +43,9 @@ if TYPE_CHECKING:
 
 
 _logger = getLogger(__name__)
+
+
+ViewType = View | _MissingSentinel
 
 
 class CustomBot(commands.Bot):
@@ -87,15 +96,11 @@ class CustomBot(commands.Bot):
 
         return await super().__aexit__(exc_type, exc_val, exc_tb)
 
-    @staticmethod
-    async def enforce_clearance(ctx: CustomContext) -> bool:
-        return await ctx.author_clearance() >= ctx.command.extras.get('requirement', 0)
-
     @property
     def now(self) -> datetime:
         return datetime.now(tz=timezone.utc)
 
-    def convert_duration(self, duration: str, allow_any: bool = False) -> timedelta:
+    def convert_duration(self, duration: str, /, *, allow_any: bool = False) -> timedelta:
         try:
             n = int(duration[:-1])
             multiplier = self.__durations__[duration[-1:].lower()]
@@ -105,6 +110,30 @@ class CustomBot(commands.Bot):
         if td.total_seconds() < 60 and allow_any is False:
             raise DurationError()
         return td
+
+    @staticmethod
+    async def enforce_clearance(ctx: CustomContext, /) -> bool:
+        return await ctx.author_clearance() >= ctx.command.extras.get('requirement', 0)
+
+    @staticmethod
+    async def basic_embed(
+        destination: Messageable,
+        message: str,
+        colour: Colour,
+        /, *,
+        view: ViewType = MISSING
+    ) -> Message:
+        embed = Embed(description=message, colour=colour)
+        return await destination.send(embed=embed, view=view)
+
+    async def neutral_embed(self, destination: Messageable, message: str, /, *, view: ViewType = MISSING) -> Message:
+        return await self.basic_embed(destination, message, Colour.blue(), view=view)
+
+    async def good_embed(self, destination: Messageable, message: str, /, *, view: ViewType = MISSING) -> Message:
+        return await self.basic_embed(destination, message, Colour.green(), view=view)
+
+    async def bad_embed(self, destination: Messageable, message: str, /, *, view: ViewType = MISSING) -> Message:
+        return await self.basic_embed(destination, message, Colour.red(), view=view)
 
     @tasks.loop(minutes=1)
     async def manage_modlogs(self) -> None:
