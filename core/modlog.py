@@ -18,17 +18,17 @@ class Modlog:
     user_id: int
     mod_id: int
 
-    channel_id: int | None = None
+    channel_id: int | None
 
     type: str = 'Unknown'
     reason: str = 'No reason provided.'
 
     created: datetime
-    duration: timedelta | None = None
+    duration: timedelta | None
 
-    received: bool = False
-    deleted: bool = False
-    active: bool = False
+    received: bool
+    deleted: bool
+    active: bool
 
     @property
     def until(self) -> datetime:
