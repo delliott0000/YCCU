@@ -72,6 +72,8 @@ class CustomBot(commands.Bot):
 
         self.LOOPS: tuple[tasks.Loop, ...] = self.manage_modlogs, self.init_status
 
+        self.add_check(self.enforce_clearance, call_once=True)
+
     async def __aexit__(
         self,
         exc_type: type[BaseException] | None,
@@ -83,6 +85,10 @@ class CustomBot(commands.Bot):
             loop.remove_exception_type(Exception)
 
         return await super().__aexit__(exc_type, exc_val, exc_tb)
+
+    @staticmethod
+    async def enforce_clearance(ctx: CustomContext) -> bool:
+        return await ctx.author_clearance() >= ctx.command.extras.get('requirement', 0)
 
     @property
     def now(self) -> datetime:
