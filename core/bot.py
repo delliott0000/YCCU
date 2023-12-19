@@ -137,6 +137,8 @@ class CustomBot(commands.Bot):
 
     @tasks.loop(minutes=1)
     async def manage_modlogs(self) -> None:
+        await self.wait_until_ready()
+
         ...
 
     @tasks.loop(count=1)
