@@ -11,6 +11,7 @@ from core.mongo import MongoDBClient
 from core.mee6 import MEE6APIClient
 from core.help import CustomHelpCommand
 from core.errors import DurationError
+from core.modlog import Modlog
 
 from discord.ext import commands, tasks
 from discord import (
@@ -184,5 +185,31 @@ class CustomBot(commands.Bot):
 
 class CustomContext(commands.Context[CustomBot]):
 
+    __enduring_log_types__ = 'mute', 'ban', 'channel_ban'
+
     async def author_clearance(self) -> int:
         ...
+
+    async def to_modlog(
+        self,
+        user_id: int,
+        /, *,
+        channel_id: int | None = None,
+        reason: str = 'No reason provided.',
+        duration: timedelta | None = None,
+        received: bool = False
+    ) -> Modlog:
+        return Modlog(
+            bot=self.bot,
+            case_id=await self.bot.mongo.generate_modlog_id(),
+            user_id=user_id,
+            mod_id=self.author.id,
+            channel_id=channel_id,
+            type=self.command.callback.__name__,
+            reason=reason,
+            created=self.bot.now,
+            duration=duration,
+            received=received,
+            deleted=False,
+            active=self.command.callback.__name__ in self.__enduring_log_types__
+        )

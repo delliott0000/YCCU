@@ -20,8 +20,8 @@ class Modlog:
 
     channel_id: int | None
 
-    type: str = 'Unknown'
-    reason: str = 'No reason provided.'
+    type: str
+    reason: str
 
     created: datetime
     duration: timedelta | None
