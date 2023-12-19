@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from core.bot import CustomBot
 
 
-@dataclass(kw_only=True, slots=True)
+@dataclass(kw_only=True, slots=True, frozen=True)
 class MetaData:
 
     bot: CustomBot

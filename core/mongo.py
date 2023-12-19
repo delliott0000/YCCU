@@ -12,10 +12,11 @@ from motor.motor_asyncio import (
     AsyncIOMotorCollection,
     AsyncIOMotorClientSession
 )
+from pymongo import ReturnDocument
 from pymongo.errors import ConfigurationError, ServerSelectionTimeoutError
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing import Self, Any
     from types import TracebackType
 
     from core.bot import CustomBot
@@ -72,7 +73,7 @@ class MongoDBClient:
 
     async def get_metadata(self) -> MetaData:
         collection: AsyncIOMotorCollection = self.database.metadata
-        data = await collection.find_one({}, session=self.__session)
+        data: dict[str, Any] | None = await collection.find_one({}, session=self.__session)
 
         if data is None:
             data = {
@@ -105,3 +106,14 @@ class MongoDBClient:
 
         data.pop('_id', None)
         return MetaData(bot=self.bot, **data)
+
+    async def update_metadata(self, **kwargs) -> None:
+        collection: AsyncIOMotorCollection = self.database.metadata
+        data: dict[str, Any] = await collection.find_one_and_update(
+            {},
+            {'$set': kwargs},
+            return_document=ReturnDocument.AFTER,
+            session=self.__session
+        )
+        data.pop('_id', None)
+        self.bot.metadata = MetaData(bot=self.bot, **data)

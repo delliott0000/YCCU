@@ -121,7 +121,7 @@ class CustomBot(commands.Bot):
         self.bans = [entry.user.id async for entry in self.guild.bans(limit=None)]
 
         self.metadata = await self.mongo.get_metadata()
-        # Set view listeners
+        # TODO: Set view listeners
 
         for loop in self.LOOPS:
             loop.add_exception_type(Exception)
