@@ -249,8 +249,35 @@ class CustomBot(commands.Bot):
         view = TracebackView(self, sent, traceback)
         await sent.edit(view=view)
 
-    async def send_command_help(self, ctx: CustomContext, command: commands.Command, /) -> Message | None:
-        ...
+    async def send_command_help(self, ctx: CustomContext, command: commands.Command, /) -> None:
+        requirement = command.extras.get('requirement', 0)
+        clearance = await self.member_clearance(ctx.author)
+        if clearance < requirement:
+            return
+
+        prefix = self.command_prefix
+        name, desc, params, aliases = command.name, command.description, command.params, command.aliases
+        params_string = ' '.join(('opt' if params[param].required is False else '') + f'<{param}>' for param in params)
+
+        help_embed = Embed(
+            colour=Colour.blue(),
+            title=f'{prefix}{name} Command',
+            description=desc + f' Requires {self.clearance_to_string(requirement)} **`[{requirement}]`** or higher.'
+        )
+        help_embed.set_author(name='Help Menu', icon_url=self.user.avatar)
+        help_embed.set_footer(text=f'Use {prefix}help to view all commands.')
+
+        help_embed.add_field(
+            name='Usage:',
+            value=f'`{prefix}{name} {params_string}`',
+            inline=False
+        )
+        help_embed.add_field(
+            name='Aliases:',
+            value=f'`{", ".join(aliases)}`' if aliases else '`None`',
+            inline=False
+        )
+        await ctx.send(embed=help_embed)
 
     async def command_names(self) -> list[str]:
         ...
