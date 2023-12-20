@@ -29,7 +29,7 @@ class RoleButton(Button):
             colour = Colour.green()
 
         except (AttributeError, HTTPException) as error:
-            message = f'Something went wrong, please contact a member of staff. Error: `{error}`'
+            message = f'❌ Something went wrong, please contact a member of staff. Error: `{error}`'
             colour = Colour.red()
 
         embed = Embed(colour=colour, description=message)
