@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from logging import getLogger
+from datetime import timedelta
 
 from core.metadata import MetaData
 from core.modlog import Modlog
@@ -171,6 +172,9 @@ class MongoDBClient:
             raise ModlogNotFound(**search_dict)
 
         _logger.info(f'Updated existing modlog entry - Case ID: {data.get("case_id")} - Updated: {update_dict}')
+
+        data['created'] = self.bot.dt_from_timestamp(data['created'])
+        data['duration'] = timedelta(seconds=data['duration'])
 
         data.pop('_id', None)
         return Modlog(bot=self.bot, **data)
