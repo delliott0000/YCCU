@@ -127,7 +127,7 @@ class MongoDBClient:
         )
         return most_recent_modlog.get('case_id') + 1 if most_recent_modlog is not None else 1
 
-    async def insert_modlog(self, modlog: Modlog) -> None:
+    async def insert_modlog(self, modlog: Modlog, /) -> None:
         collection: AsyncIOMotorCollection = self.database.modlogs
         await collection.insert_one(
             {
