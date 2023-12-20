@@ -74,7 +74,7 @@ class MongoDBClient:
         await self.__session.end_session()
 
     async def get_metadata(self) -> MetaData:
-        collection: AsyncIOMotorCollection = self.database.metadata
+        collection: AsyncIOMotorCollection = self.database.meta_data
         data: Dict | None = await collection.find_one({}, session=self.__session)
 
         if data is None:
@@ -110,7 +110,7 @@ class MongoDBClient:
         return MetaData(bot=self.bot, **data)
 
     async def update_metadata(self, **kwargs: Any) -> None:
-        collection: AsyncIOMotorCollection = self.database.metadata
+        collection: AsyncIOMotorCollection = self.database.meta_data
         data: Dict = await collection.find_one_and_update(
             {},
             {'$set': kwargs},
