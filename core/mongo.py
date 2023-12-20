@@ -7,20 +7,17 @@ from logging import getLogger
 from core.metadata import MetaData
 
 from certifi import where
-from motor.motor_asyncio import (
-    AsyncIOMotorClient,
-    AsyncIOMotorDatabase,
-    AsyncIOMotorCollection,
-    AsyncIOMotorClientSession
-)
 from pymongo import ReturnDocument, DESCENDING
 from pymongo.errors import ConfigurationError, ServerSelectionTimeoutError
+from motor.motor_asyncio import AsyncIOMotorClient
 
 if TYPE_CHECKING:
     from typing import Self
     from types import TracebackType
 
     from core.bot import CustomBot
+
+    from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection, AsyncIOMotorClientSession
 
 
 _logger = getLogger(__name__)
