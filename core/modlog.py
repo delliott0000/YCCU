@@ -24,7 +24,7 @@ class Modlog:
     reason: str
 
     created: datetime
-    duration: timedelta | None
+    duration: timedelta
 
     received: bool
     deleted: bool

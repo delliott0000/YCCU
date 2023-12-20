@@ -101,6 +101,10 @@ class CustomBot(commands.Bot):
     def now(self) -> datetime:
         return datetime.now(tz=timezone.utc)
 
+    @staticmethod
+    def dt_from_timestamp(timestamp: float, /) -> datetime:
+        return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+
     def clearance_to_string(self, clearance: int, /) -> str:
         if clearance <= 0:
             return '**`Member`**'
@@ -350,7 +354,7 @@ class CustomContext(commands.Context[CustomBot]):
         /, *,
         channel_id: int = 0,
         reason: str = 'No reason provided.',
-        duration: timedelta | None = None,
+        duration: timedelta = timedelta(seconds=0),
         received: bool = False
     ) -> Modlog:
         return Modlog(
