@@ -100,6 +100,16 @@ class CustomBot(commands.Bot):
     def now(self) -> datetime:
         return datetime.now(tz=timezone.utc)
 
+    def clearance_to_string(self, clearance: int, /) -> str:
+        if clearance <= 0:
+            return '**`Member`**'
+        elif clearance >= 9:
+            return '**`Owner`**'
+        roles = 'helper', 'tmod', 'rmod', 'smod', 'hmod', 'senior', 'bot', 'admin'
+        clearance_map = {roles.index(role) + 1: getattr(self.metadata, f'{role}_role_id', None) for role in roles}
+        role_id = clearance_map.get(clearance)
+        return f'**`None`**' if role_id is None else f'<@&{role_id}>'
+
     def convert_duration(self, duration: str, /, *, allow_any: bool = False) -> timedelta:
         try:
             n = int(duration[:-1])
