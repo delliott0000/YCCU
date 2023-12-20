@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from logging import getLogger
 
 from core.metadata import MetaData
+from core.modlog import Modlog
 
 from certifi import where
 from pymongo import ReturnDocument, DESCENDING
@@ -124,3 +125,23 @@ class MongoDBClient:
             session=self.__session
         )
         return most_recent_modlog.get('case_id') + 1 if most_recent_modlog is not None else 1
+
+    async def insert_modlog(self, modlog: Modlog) -> None:
+        collection: AsyncIOMotorCollection = self.database.modlogs
+        await collection.insert_one(
+            {
+                'case_id': modlog.case_id,
+                'user_id': modlog.user_id,
+                'mod_id': modlog.mod_id,
+                'channel_id': modlog.channel_id,
+                'type': modlog.type,
+                'reason': modlog.reason,
+                'created': round(modlog.created.timestamp()),
+                'duration': modlog.duration.total_seconds(),
+                'received': modlog.received,
+                'deleted': modlog.deleted,
+                'active': modlog.active
+            },
+            session=self.__session
+        )
+        _logger.info(f'New Modlog entry created - Case ID: {modlog.case_id}')
