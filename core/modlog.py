@@ -18,7 +18,7 @@ class Modlog:
     user_id: int
     mod_id: int
 
-    channel_id: int | None
+    channel_id: int
 
     type: str
     reason: str

@@ -348,7 +348,7 @@ class CustomContext(commands.Context[CustomBot]):
         self,
         user_id: int,
         /, *,
-        channel_id: int | None = None,
+        channel_id: int = 0,
         reason: str = 'No reason provided.',
         duration: timedelta | None = None,
         received: bool = False
