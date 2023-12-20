@@ -135,6 +135,40 @@ class CustomBot(commands.Bot):
     async def bad_embed(self, destination: Messageable, message: str, /, *, view: ViewType = MISSING) -> Message:
         return await self.basic_embed(destination, message, Colour.red(), view=view)
 
+    async def user_to_member(self, user: User, /, *, raise_exception: bool = False) -> Member | None:
+        try:
+            return self.guild.get_member(user.id) or await self.guild.fetch_member(user.id)
+        except HTTPException:
+            if raise_exception is True:
+                raise
+
+    async def member_clearance(self, member: Member | User, /) -> int:
+        if member in self.owners or member == self.guild.owner:
+            return 9
+        elif isinstance(member, User):
+            try:
+                member = await self.user_to_member(member, raise_exception=True)
+            except HTTPException:
+                return 0
+
+        role_ids = [role.id for role in member.roles]
+        data = self.metadata
+
+        return \
+            8 if data.admin_role_id in role_ids else  \
+            7 if data.bot_role_id in role_ids else    \
+            6 if data.senior_role_id in role_ids else \
+            5 if data.hmod_role_id in role_ids else   \
+            4 if data.smod_role_id in role_ids else   \
+            3 if data.rmod_role_id in role_ids else   \
+            2 if data.tmod_role_id in role_ids else   \
+            1 if data.helper_role_id in role_ids else 0
+
+    async def check_target_member(self, member: Member | User, /) -> None:
+        clearance = await self.member_clearance(member)
+        if clearance > 0:
+            raise commands.CheckFailure('The target of this moderation is protected.')
+
     @tasks.loop(minutes=1)
     async def manage_modlogs(self) -> None:
         await self.wait_until_ready()
@@ -219,7 +253,7 @@ class CustomContext(commands.Context[CustomBot]):
     __enduring_log_types__ = 'mute', 'ban', 'channel_ban'
 
     async def author_clearance(self) -> int:
-        ...
+        return await self.bot.member_clearance(self.author)
 
     async def to_modlog(
         self,
