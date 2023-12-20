@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from datetime import datetime, timezone, timedelta
+from traceback import format_exception
 from logging import getLogger
 from asyncio import run
 from os import listdir
@@ -12,6 +13,7 @@ from core.mee6 import MEE6APIClient
 from core.help import CustomHelpCommand
 from core.errors import DurationError
 from core.modlog import Modlog
+from components.traceback import TracebackView
 
 from discord.ext import commands, tasks
 from discord.utils import MISSING
@@ -41,11 +43,10 @@ if TYPE_CHECKING:
         Member
     )
 
+    ViewType = View | _MissingSentinel
+
 
 _logger = getLogger(__name__)
-
-
-ViewType = View | _MissingSentinel
 
 
 class CustomBot(commands.Bot):
@@ -201,9 +202,57 @@ class CustomBot(commands.Bot):
         ...
 
     async def on_command_error(self, ctx: CustomContext, error: commands.CommandError, /) -> None:
-        ...
+        reset_cooldown = True
+
+        if isinstance(error, (commands.CheckFailure, commands.CommandNotFound)):
+            return
+
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await self.send_command_help(ctx, ctx.command)
+            ctx.command.reset_cooldown(ctx)
+            return
+
+        elif isinstance(error, commands.CommandOnCooldown):
+            message = f'Wait `{round(error.retry_after)}s` before doing that again.'
+            reset_cooldown = False
+
+        elif isinstance(error, commands.BotMissingPermissions):
+            message = f'Bot missing required permissions: `{", ".join(error.missing_permissions).replace("_", " ")}`.'
+
+        elif isinstance(error, (
+                commands.UserNotFound, commands.MemberNotFound, commands.ChannelNotFound, commands.RoleNotFound
+        )):
+            message = f'{error.__class__.__name__[:-8]} not found.'
+
+        elif isinstance(error, commands.BadArgument):
+            message = 'Incorrect argument type(s).'
+
+        elif isinstance(error, commands.CommandInvokeError):
+            message = str(error.original)
+
+        else:
+            message = f'An unexpected error occurred: {error}'
+
+        if reset_cooldown is True:
+            ctx.command.reset_cooldown(ctx)
+
+        sent = await self.bad_embed(ctx, f'❌ {message}')
+
+        traceback = ''.join(format_exception(type(error), error, error.__traceback__))
+        if len(traceback) > 1960:
+            traceback = '\n'.join(traceback[-1960:].split('\n')[1:])
+            note = ' (Last 2,000)'
+        else:
+            note = ''
+        traceback = f'**Traceback{note}:**\n```\n{traceback}\n```'
+
+        view = TracebackView(self, sent, traceback)
+        await sent.edit(view=view)
 
     async def send_command_help(self, ctx: CustomContext, command: commands.Command, /) -> Message | None:
+        ...
+
+    async def command_names(self) -> list[str]:
         ...
 
     async def setup_hook(self) -> None:
