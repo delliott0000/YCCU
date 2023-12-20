@@ -5,6 +5,7 @@ from logging import getLogger
 
 from core.metadata import MetaData
 from core.modlog import Modlog
+from core.errors import ModlogNotFound
 
 from certifi import where
 from pymongo import ReturnDocument, DESCENDING
@@ -145,3 +146,31 @@ class MongoDBClient:
             session=self.__session
         )
         _logger.info(f'New Modlog entry created - Case ID: {modlog.case_id}')
+
+    async def update_modlog(self, **kwargs: Any) -> Modlog:
+        # Kwargs with leading underscores are our search parameters
+        # Kwargs without leading underscores are our values to update
+        search_dict = {}
+        update_dict = {}
+
+        for key, value in kwargs.items():
+            if key.startswith('_'):
+                search_dict[key[1:]] = value
+            else:
+                update_dict[key] = value
+
+        collection: AsyncIOMotorCollection = self.database.modlogs
+        data: Dict | None = await collection.find_one_and_update(
+            search_dict,
+            {'$set': update_dict},
+            return_document=ReturnDocument.AFTER,
+            session=self.__session
+        )
+
+        if data is None:
+            raise ModlogNotFound(**search_dict)
+
+        _logger.info(f'Updated existing modlog entry - Case ID: {data.get("case_id")} - Updated: {update_dict}')
+
+        data.pop('_id', None)
+        return Modlog(bot=self.bot, **data)
