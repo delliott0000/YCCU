@@ -203,6 +203,9 @@ class CustomBot(commands.Bot):
     async def on_command_error(self, ctx: CustomContext, error: commands.CommandError, /) -> None:
         ...
 
+    async def send_command_help(self, ctx: CustomContext, command: commands.Command, /) -> Message | None:
+        ...
+
     async def setup_hook(self) -> None:
         _logger.info(f'Logging in as {self.user.name} (ID: {self.user.id})...')
 
