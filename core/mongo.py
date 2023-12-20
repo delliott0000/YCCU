@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from typing import Any
 from logging import getLogger
 
 from core.metadata import MetaData
@@ -12,18 +11,17 @@ from pymongo.errors import ConfigurationError, ServerSelectionTimeoutError
 from motor.motor_asyncio import AsyncIOMotorClient
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing import Self, Any
     from types import TracebackType
 
     from core.bot import CustomBot
 
     from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection, AsyncIOMotorClientSession
 
+    Dict = dict[str, Any]
+
 
 _logger = getLogger(__name__)
-
-
-Dict = dict[str, Any]
 
 
 class MongoDBClient:
