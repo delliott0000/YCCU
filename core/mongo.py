@@ -178,3 +178,22 @@ class MongoDBClient:
 
         data.pop('_id', None)
         return Modlog(bot=self.bot, **data)
+
+    async def search_modlog(self, **kwargs: Any) -> list[Modlog]:
+        collection: AsyncIOMotorCollection = self.database.modlogs
+        modlogs = []
+        async for entry in collection.find(kwargs, session=self.__session):
+            entry: Dict
+
+            entry['created'] = self.bot.dt_from_timestamp(entry['created'])
+            entry['duration'] = timedelta(seconds=entry['duration'])
+
+            entry.pop('_id', None)
+
+            modlog = Modlog(bot=self.bot, **entry)
+            modlogs.append(modlog)
+
+        if not modlogs:
+            raise ModlogNotFound(**kwargs)
+
+        return modlogs
