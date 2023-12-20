@@ -117,9 +117,9 @@ class CustomBot(commands.Bot):
             multiplier = self.__durations__[duration[-1:].lower()]
             td = timedelta(seconds=n * multiplier)
         except (KeyError, ValueError):
-            raise DurationError()
+            raise DurationError(duration)
         if td.total_seconds() < 60 and allow_any is False:
-            raise DurationError()
+            raise DurationError(duration)
         return td
 
     @staticmethod
