@@ -11,6 +11,7 @@ from resources.config import *
 from core.mongo import MongoDBClient
 from core.mee6 import MEE6APIClient
 from core.help import CustomHelpCommand
+from core.embed import CustomEmbed
 from core.errors import DurationError
 from core.modlog import Modlog
 from components.traceback import TracebackView
@@ -24,7 +25,6 @@ from discord import (
     HTTPException,
     Activity,
     ActivityType,
-    Embed,
     Colour
 )
 
@@ -138,7 +138,7 @@ class CustomBot(commands.Bot):
         /, *,
         view: ViewType = MISSING
     ) -> Message:
-        embed = Embed(description=message, colour=colour)
+        embed = CustomEmbed(description=message, colour=colour)
         return await destination.send(embed=embed, view=view)
 
     async def neutral_embed(self, destination: Messageable, message: str, /, *, view: ViewType = MISSING) -> Message:
@@ -263,7 +263,7 @@ class CustomBot(commands.Bot):
         name, desc, params, aliases = command.name, command.description, command.params, command.aliases
         params_string = ' '.join(('opt' if params[param].required is False else '') + f'<{param}>' for param in params)
 
-        help_embed = Embed(
+        help_embed = CustomEmbed(
             colour=Colour.blue(),
             title=f'{prefix}{name} Command',
             description=desc + f' Requires {self.clearance_to_string(requirement)} **`[{requirement}]`** or higher.'
