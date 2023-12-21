@@ -73,6 +73,11 @@ class MongoDBClient:
     ) -> None:
         await self.__session.end_session()
 
+    def prep_modlog_data(self, data: Dict) -> None:
+        data['created'] = self.bot.dt_from_timestamp(data['created'])
+        data['duration'] = timedelta(seconds=data['duration'])
+        data.pop('_id', None)
+
     async def get_metadata(self) -> MetaData:
         collection: AsyncIOMotorCollection = self.database.meta_data
         data: Dict | None = await collection.find_one({}, session=self.__session)
@@ -173,24 +178,19 @@ class MongoDBClient:
 
         _logger.info(f'Updated existing modlog entry - Case ID: {data.get("case_id")} - Updated: {update_dict}')
 
-        data['created'] = self.bot.dt_from_timestamp(data['created'])
-        data['duration'] = timedelta(seconds=data['duration'])
-
-        data.pop('_id', None)
+        self.prep_modlog_data(data)
         return Modlog(bot=self.bot, **data)
 
     async def search_modlog(self, **kwargs: Any) -> list[Modlog]:
         collection: AsyncIOMotorCollection = self.database.modlogs
         modlogs = []
+
+        entry: Dict
         async for entry in collection.find(kwargs, session=self.__session):
-            entry: Dict
 
-            entry['created'] = self.bot.dt_from_timestamp(entry['created'])
-            entry['duration'] = timedelta(seconds=entry['duration'])
-
-            entry.pop('_id', None)
-
+            self.prep_modlog_data(entry)
             modlog = Modlog(bot=self.bot, **entry)
+
             modlogs.append(modlog)
 
         if not modlogs:
