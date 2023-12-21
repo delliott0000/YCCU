@@ -29,14 +29,6 @@ _logger = getLogger(__name__)
 
 class MongoDBClient:
 
-    __slots__ = (
-        'bot',
-        'uri',
-        'client',
-        'database',
-        '__session'
-    )
-
     def __init__(self, bot: CustomBot, uri: str, /) -> None:
         self.bot: CustomBot = bot
         self.uri: str = uri
