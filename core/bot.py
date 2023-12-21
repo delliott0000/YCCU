@@ -12,8 +12,8 @@ from core.mongo import MongoDBClient
 from core.mee6 import MEE6APIClient
 from core.help import CustomHelpCommand
 from core.embed import CustomEmbed
-from core.errors import DurationError
 from core.modlog import Modlog
+from core.errors import DurationError, ModlogNotFound
 from components.traceback import TracebackView
 
 from discord.ext import commands, tasks
@@ -219,7 +219,32 @@ class CustomBot(commands.Bot):
     async def manage_modlogs(self) -> None:
         await self.wait_until_ready()
 
-        ...
+        self.guild = self.get_guild(self.guild_id) or self.guild
+
+        try:
+            active_modlogs = await self.mongo.search_modlog(active=True, deleted=False)
+        except ModlogNotFound:
+            return
+
+        for modlog in active_modlogs:
+            if modlog.is_expired is False:
+                continue
+
+            try:
+                user = self.get_user(modlog.user_id) or await self.fetch_user(modlog.user_id)
+
+                if modlog.type == 'ban':
+                    await self.guild.unban(user)
+
+                elif modlog.type == 'channel_ban':
+                    channel = self.get_channel(modlog.channel_id) or await self.fetch_channel(modlog.channel_id)
+                    member = await self.user_to_member(user, raise_exception=True)
+                    await channel.set_permissions(member, view_channel=None)
+
+            except HTTPException as error:
+                _logger.error(f'Failed to resolve expired modlog (Case ID: {modlog.case_id}) - {error}')
+
+            await self.mongo.update_modlog(_case_id=modlog.case_id, active=False)
 
     @tasks.loop(count=1)
     async def init_status(self) -> None:
@@ -234,7 +259,28 @@ class CustomBot(commands.Bot):
         await self.invoke(ctx)
 
     async def on_member_join(self, member: Member, /) -> None:
-        ...
+        if member.guild != self.guild:
+            return
+
+        try:
+            member_modlogs = await self.mongo.search_modlog(user_id=member.id, active=True, deleted=False)
+        except ModlogNotFound:
+            return
+
+        for modlog in member_modlogs:
+            if modlog.is_expired is True:
+                continue
+
+            try:
+                if modlog.type == 'mute':
+                    await member.timeout(modlog.until)
+
+                elif modlog.type == 'channel_ban':
+                    channel = self.get_channel(modlog.channel_id) or await self.fetch_channel(modlog.channel_id)
+                    await channel.set_permissions(member, view_channel=False)
+
+            except HTTPException as error:
+                _logger.error(f'Failed to enforce case {modlog.case_id} on member re-join - {error}')
 
     async def on_command_error(self, ctx: CustomContext, error: commands.CommandError, /) -> None:
         reset_cooldown = True
