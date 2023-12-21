@@ -282,6 +282,8 @@ class CustomBot(commands.Bot):
             except HTTPException as error:
                 _logger.error(f'Failed to enforce case {modlog.case_id} on member re-join - {error}')
 
+    # TODO: `all_command_names` method
+
     async def on_command_error(self, ctx: CustomContext, error: commands.CommandError, /) -> None:
         reset_cooldown = True
 
