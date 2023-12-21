@@ -65,7 +65,7 @@ class MongoDBClient:
     ) -> None:
         await self.__session.end_session()
 
-    def prep_modlog_data(self, data: Dict) -> None:
+    def prep_modlog_data(self, data: Dict, /) -> None:
         data['created'] = self.bot.dt_from_timestamp(data['created'])
         data['duration'] = timedelta(seconds=data['duration'])
         data.pop('_id', None)

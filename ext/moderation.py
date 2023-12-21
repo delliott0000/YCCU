@@ -12,5 +12,5 @@ class ModerationCommands(commands.Cog):
     ...
 
 
-async def setup(bot: CustomBot) -> None:
+async def setup(bot: CustomBot, /) -> None:
     await bot.add_cog(ModerationCommands())
