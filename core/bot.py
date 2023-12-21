@@ -29,9 +29,12 @@ from discord import (
 )
 
 if TYPE_CHECKING:
+    from typing import Any
     from types import TracebackType
+    from collections.abc import Iterable
 
     from core.metadata import MetaData
+    from core.embed import EmbedField
 
     from discord.ui import View
     from discord.abc import Messageable
@@ -129,6 +132,34 @@ class CustomBot(commands.Bot):
     @staticmethod
     async def enforce_clearance(ctx: CustomContext, /) -> bool:
         return await ctx.author_clearance() >= ctx.command.extras.get('requirement', 0)
+
+    @staticmethod
+    def fields_to_embeds(fields: Iterable[EmbedField], /, **kwargs: Any) -> list[CustomEmbed]:
+        def new_embed() -> CustomEmbed:
+            return CustomEmbed(
+                title=kwargs.get('title'),
+                colour=kwargs.get('colour'),
+                description=kwargs.get('description'),
+                timestamp=kwargs.get('timestamp')
+            )
+
+        embeds: list[CustomEmbed] = [new_embed()]
+        field_limit: int = kwargs.get('field_limit', 6)
+
+        for field in fields:
+            if len(embeds[-1].fields) >= field_limit or len(embeds[-1]) + len(field) > 6000:
+                embeds.append(new_embed())
+            embeds[-1].add_custom_field(field)
+
+        author_name = kwargs.get('author_name')
+        author_icon = kwargs.get('author_icon')
+
+        for embed in embeds:
+            embed.set_footer(text=f'Page {embeds.index(embed) + 1} of {len(embeds)}')
+            if author_name is not None and author_icon is not None:
+                embed.set_author(name=author_name, icon_url=author_icon)
+
+        return embeds
 
     @staticmethod
     async def basic_embed(
