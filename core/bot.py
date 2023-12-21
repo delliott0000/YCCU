@@ -360,9 +360,6 @@ class CustomBot(commands.Bot):
         )
         await ctx.send(embed=help_embed)
 
-    async def command_names(self) -> list[str]:
-        ...
-
     async def setup_hook(self) -> None:
         _logger.info(f'Logging in as {self.user.name} (ID: {self.user.id})...')
 
